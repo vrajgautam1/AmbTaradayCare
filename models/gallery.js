@@ -1,15 +1,16 @@
 const mongoose = require("mongoose");
 
+const imageSchema = new mongoose.Schema({
+  filename: String,
+  isApproved: { type: Boolean, default: true },
+}, { _id: true }); // ensures each image has its own _id
+
 const gallerySchema = new mongoose.Schema({
-  images: [String], // Supports multiple images
+  images: [imageSchema],
   category: {
     type: String,
     enum: ["Events", "Classroom", "Activities"],
     required: true,
-  },
-  isApproved: {
-    type: Boolean,
-    default: true,
   },
   createdAt: {
     type: Date,

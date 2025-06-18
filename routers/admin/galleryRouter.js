@@ -10,9 +10,10 @@ router.post("/upload", upload.array("images", 10), galleryController.uploadGalle
 router.get("/view", galleryController.getGalleryByFilter);
 
 // ✅ Toggle approval (approve/disapprove)
-router.patch("/:id/toggle", galleryController.toggleApproval);
+router.patch("/:galleryId/image/:imageId/toggle", galleryController.toggleImageApproval);
 
 // ✅ Delete gallery
-router.delete("/:id", galleryController.deleteImageFromGallery);
+router.delete("/:galleryId/image/:imageId", galleryController.deleteSingleImage);
+
 
 module.exports = router;

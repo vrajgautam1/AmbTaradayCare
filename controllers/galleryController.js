@@ -45,47 +45,61 @@ exports.getGalleryByFilter = async (req, res) => {
 };
 
 // ✅ Approve / Disapprove Image Set
-exports.toggleApproval = async (req, res) => {
+// PATCH /gallery/:galleryId/image/:imageId/toggle
+exports.toggleImageApproval = async (req, res) => {
   try {
-    const { id } = req.params;
-    const gallery = await Gallery.findById(id);
-    if (!gallery) return res.status(404).json({ error: "Gallery not found" });
+    const { galleryId, imageId } = req.params;
 
-    gallery.isApproved = !gallery.isApproved;
+    const gallery = await Gallery.findById(galleryId);
+    if (!gallery) {
+      return res.status(404).json({ error: "Gallery not found" });
+    }
+
+    const image = gallery.images.id(imageId);
+    if (!image) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    image.isApproved = !image.isApproved;
     await gallery.save();
-    res.status(200).json({ message: `Gallery ${gallery.isApproved ? "approved" : "disapproved"}`, gallery });
+
+    res.status(200).json({
+      message: `Image has been ${image.isApproved ? "approved" : "disapproved"}`,
+      image,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+
+
 // ✅ Delete Gallery (and images)
 
-exports.deleteImageFromGallery = async (req, res) => {
+// DELETE /gallery/:galleryId/image/:imageId
+exports.deleteSingleImage = async (req, res) => {
   try {
-    const { id, index } = req.params;
-    const gallery = await Gallery.findById(id);
+    const { galleryId, imageId } = req.params;
 
-    if (!gallery) {
-      return res.status(404).json({ error: "Gallery document not found" });
-    }
+    const gallery = await Gallery.findById(galleryId);
+    if (!gallery) return res.status(404).json({ error: "Gallery not found" });
 
-    const imageToDelete = gallery.images[index];
-    if (!imageToDelete) {
-      return res.status(404).json({ error: "No image at this index" });
-    }
+    const image = gallery.images.id(imageId);
+    if (!image) return res.status(404).json({ error: "Image not found" });
 
-    // Delete image file from disk
-    const imagePath = path.join(__dirname, "../uploads", imageToDelete);
-    fs.unlink(imagePath, (err) => {
-      if (err) console.error("Failed to delete image from disk:", err);
+    // Remove file from filesystem
+    const fs = require("fs");
+    const path = require("path");
+    const imagePath = path.join(__dirname, "../uploads", image.filename);
+    fs.unlink(imagePath, err => {
+      if (err) console.error("Error deleting file:", err);
     });
 
-    // Remove image from array
-    gallery.images.splice(index, 1);
+    // Remove from DB
+    image.remove();
     await gallery.save();
 
-    res.status(200).json({ message: "Image deleted", updatedGallery: gallery });
+    res.status(200).json({ message: "Image deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
