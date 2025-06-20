@@ -6,14 +6,12 @@ const upload = require("../../middleware/multerMiddleWare");
 // ✅ Upload gallery with multiple images
 router.post("/upload", upload.array("images", 10), galleryController.uploadGallery);
 
-// ✅ View gallery (by category & status)
-router.get("/view", galleryController.getGalleryByFilter);
+router.get("/gallery", galleryController.getGalleryByFilter);
 
-// ✅ Toggle approval (approve/disapprove)
-router.patch("/:galleryId/image/:imageId/toggle", galleryController.toggleImageApproval);
+router.get("/gallery/:galleryId/image/:index/toggle", galleryController.toggleImageApproval);
 
-// ✅ Delete gallery
-router.delete("/:galleryId/image/:imageId", galleryController.deleteSingleImage);
+router.get("/gallery/:galleryId/image/:index", galleryController.deleteSingleImage);
+
 
 
 module.exports = router;

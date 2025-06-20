@@ -9,16 +9,19 @@ router.post('/createreview', reviewController.createReview);
 router.get('/viewreviews', reviewController.getAllReviews);
 
 // Admin approves/rejects a review
-router.patch('/review/:id/approval', reviewController.setApproval);
+router.get('/approveReview/:id', reviewController.setApproval);
 
-router.patch('/review/:id/disapprove', reviewController.disapproveReview);
+router.get('/disapproveReview/:id', reviewController.disapproveReview);
+
+router.get("/deleteReview/:id", reviewController.deleteReview);
 
 // Admin edits review
 router.put('/review/:id/edit', reviewController.editReview);
 
 // Homepage fetches only approved reviews
-router.get('/approvedreviews', reviewController.getApprovedReviews);
+router.get("/reviews/approved", reviewController.renderApprovedReviews);
+router.get("/reviews/disapproved", reviewController.renderDisapprovedReviews);
 
-router.get('/disapprovedReviews', reviewController.getdisapprovedReviews);
+
 
 module.exports = router;

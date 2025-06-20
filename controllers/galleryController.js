@@ -9,69 +9,86 @@ exports.uploadGallery = async (req, res) => {
     const files = req.files;
 
     if (!files || files.length === 0) {
-      return res.status(400).json({ error: "No images uploaded" });
+      return res.status(400).send("No images uploaded");
     }
 
-    const imageFilenames = files.map((file) => file.filename);
+    // 👇 Correct structure for subdocuments
+    const imageDocs = files.map((file) => ({
+      filename: file.filename,
+      isApproved: true,
+    }));
 
     const newGallery = new Gallery({
-      images: imageFilenames,
+      images: imageDocs, // 👈 not strings anymore
       category,
-      isApproved: true, // default approval
     });
 
     await newGallery.save();
-    res.status(201).json({ message: "Gallery uploaded", gallery: newGallery });
+
+    // ✅ Redirect after success
+    res.redirect("/admin/gallery");
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).send("Server Error: Unable to upload images");
   }
 };
+
 
 // ✅ Get Images by Category + Approval
 exports.getGalleryByFilter = async (req, res) => {
   try {
     const { category, status } = req.query;
-
     const filter = {};
-    if (category) filter.category = category;
-    if (status === "approved") filter.isApproved = true;
-    else if (status === "disapproved") filter.isApproved = false;
 
-    const gallery = await Gallery.find(filter);
-    res.status(200).json(gallery);
+    if (category) filter.category = category;
+
+    // Filtering based on image approval status
+    let galleries = await Gallery.find(filter);
+
+    if (status === 'approved') {
+      galleries = galleries.map(g => ({
+        ...g.toObject(),
+        images: g.images.filter(img => img.isApproved === true)
+      }));
+    } else if (status === 'disapproved') {
+      galleries = galleries.map(g => ({
+        ...g.toObject(),
+        images: g.images.filter(img => img.isApproved === false)
+      }));
+    }
+
+    res.render('admin/pages/gallery', {
+      gallery: galleries,
+      query: req.query // pass to EJS for preselecting filters
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).send("Gallery filter error: " + err.message);
   }
 };
+
 
 // ✅ Approve / Disapprove Image Set
 // PATCH /gallery/:galleryId/image/:imageId/toggle
 exports.toggleImageApproval = async (req, res) => {
   try {
-    const { galleryId, imageId } = req.params;
-
+    const { galleryId, index } = req.params;
     const gallery = await Gallery.findById(galleryId);
-    if (!gallery) {
-      return res.status(404).json({ error: "Gallery not found" });
+    if (!gallery) return res.status(404).send("Gallery not found");
+
+    const imgIndex = parseInt(index);
+    if (isNaN(imgIndex) || imgIndex >= gallery.images.length) {
+      return res.status(400).send("Invalid image index");
     }
 
-    const image = gallery.images.id(imageId);
-    if (!image) {
-      return res.status(404).json({ error: "Image not found" });
-    }
-
-    image.isApproved = !image.isApproved;
+    // ✅ Toggle specific image approval status
+    gallery.images[imgIndex].isApproved = !gallery.images[imgIndex].isApproved;
     await gallery.save();
 
-    res.status(200).json({
-      message: `Image has been ${image.isApproved ? "approved" : "disapproved"}`,
-      image,
-    });
+    res.redirect("/admin/gallery");
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).send("Toggle approval failed: " + err.message);
   }
 };
-
 
 
 // ✅ Delete Gallery (and images)
@@ -79,29 +96,30 @@ exports.toggleImageApproval = async (req, res) => {
 // DELETE /gallery/:galleryId/image/:imageId
 exports.deleteSingleImage = async (req, res) => {
   try {
-    const { galleryId, imageId } = req.params;
-
+    const { galleryId, index } = req.params;
     const gallery = await Gallery.findById(galleryId);
-    if (!gallery) return res.status(404).json({ error: "Gallery not found" });
+    if (!gallery) return res.status(404).send("Gallery not found");
 
-    const image = gallery.images.id(imageId);
-    if (!image) return res.status(404).json({ error: "Image not found" });
+    const imgIndex = parseInt(index);
+    if (isNaN(imgIndex) || imgIndex >= gallery.images.length) {
+      return res.status(400).send("Invalid image index");
+    }
 
-    // Remove file from filesystem
-    const fs = require("fs");
-    const path = require("path");
-    const imagePath = path.join(__dirname, "../uploads", image.filename);
-    fs.unlink(imagePath, err => {
-      if (err) console.error("Error deleting file:", err);
+    const filename = gallery.images[imgIndex].filename; // ✅ fix here
+    const imagePath = path.join(__dirname, "../uploads", filename);
+
+    // Delete file from disk
+    fs.unlink(imagePath, (err) => {
+      if (err) console.error("Error deleting image:", err);
     });
 
     // Remove from DB
-    image.remove();
+    gallery.images.splice(imgIndex, 1);
     await gallery.save();
 
-    res.status(200).json({ message: "Image deleted successfully" });
+    res.redirect("/admin/gallery");
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).send("Error deleting image: " + err.message);
   }
 };
 

@@ -2,16 +2,25 @@ const Admin = require("../models/Admin");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+// Show Login Page
+exports.openLoginPage = (req, res) => {
+  return res.render("login", { error: null });
+};
+
 // 🔐 Admin Login
 exports.login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
     const admin = await Admin.findOne({ username });
-    if (!admin) return res.status(404).json({ error: "Admin not found" });
+    if (!admin) {
+      return res.render("login", { error: "Admin not found" });
+    }
 
     const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
+    if (!isMatch) {
+      return res.render("login", { error: "Invalid credentials" });
+    }
 
     const token = jwt.sign(
       { id: admin._id, username: admin.username },
@@ -19,10 +28,24 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.status(200).json({ message: "Login successful", token });
+    // Set token in cookie
+    res.cookie("Authorization", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // only send over HTTPS in production
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    });
+
+    return res.redirect("/admin/dashboard");
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Login Error:", err);
+    return res.render("login", { error: "Something went wrong. Please try again." });
   }
+};
+
+// 🚪 Admin Logout
+exports.logout = (req, res) => {
+  res.clearCookie("Authorization");
+  return res.redirect("/login");
 };
 
 // 🔑 Change Password
@@ -30,7 +53,7 @@ exports.changePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
   try {
-    const admin = await Admin.findById(req.admin.id); // set by middleware
+    const admin = await Admin.findById(req.admin.id); // set by JWT middleware
     if (!admin) return res.status(404).json({ error: "Admin not found" });
 
     const isMatch = await bcrypt.compare(oldPassword, admin.password);
@@ -44,10 +67,4 @@ exports.changePassword = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
-
-
-exports.logout = (req, res) => {
-  res.clearCookie("token"); // assuming token is stored in 'token' cookie
-  res.status(200).json({ message: "Logged out successfully" });
 };

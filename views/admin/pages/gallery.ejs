@@ -1,0 +1,142 @@
+<%- include('../partials/header') %>
+    <%- include('../partials/sidebar') %>
+
+        <div class="page-wrapper">
+
+            <div class="container-fluid">
+
+                <div class="row">
+                    <!-- Column -->
+
+
+                    <div class="container mt-4">
+
+                        <!-- 🔼 Upload Form -->
+                        <h2 class="mb-3">Upload Gallery</h2>
+                        <form id="uploadForm" action="/admin/upload" method="POST" enctype="multipart/form-data"
+                            class="border p-3 rounded shadow-sm">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Select Category</label>
+                                <select name="category" class="form-select" required>
+                                    <option value="">-- Choose Category --</option>
+                                    <option value="Events">Events</option>
+                                    <option value="Classroom">Classroom</option>
+                                    <option value="Activities">Activities</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Upload Images</label>
+                                <input type="file" name="images" multiple accept="image/*" class="form-control"
+                                    required />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" id="uploadBtn">
+                                <span id="btnText">Upload</span>
+                                <span id="spinner" class="spinner-border spinner-border-sm d-none"></span>
+                            </button>
+                        </form>
+
+                        <hr class="my-5">
+
+                         <!-- 🖼️ Gallery Albums -->
+                        <h2>Gallery Albums</h2>
+
+                        <!-- 🔍 Filter Gallery -->
+                        <form method="GET" action="/admin/gallery" class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="category" class="form-label">Filter by Category</label>
+                                <select name="category" class="form-select">
+                                    <option value="">All Categories</option>
+                                    <option value="Events" <%=(query.category==='Events' ) ? 'selected' : '' %>>Events
+                                    </option>
+                                    <option value="Classroom" <%=(query.category==='Classroom' ) ? 'selected' : '' %>
+                                        >Classroom</option>
+                                    <option value="Activities" <%=(query.category==='Activities' ) ? 'selected' : '' %>
+                                        >Activities</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="status" class="form-label">Filter by Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="">All</option>
+                                    <option value="approved" <%=(query.status==='approved' ) ? 'selected' : '' %>
+                                        >Approved</option>
+                                    <option value="disapproved" <%=(query.status==='disapproved' ) ? 'selected' : '' %>
+                                        >Disapproved</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-secondary w-100">Apply Filters</button>
+                            </div>
+                        </form>
+
+
+                       
+                        <div class="row">
+                            <% if (gallery && gallery.length> 0) { %>
+                                <% gallery.forEach((doc, docIndex)=> { %>
+                                    <% doc.images.forEach((image, index)=> { %>
+                                        <div class="col-md-4">
+                                            <div class="card mb-4">
+                                                <img src="/uploads/<%= image.filename %>" class="card-img-top"
+                                                    alt="Image">
+
+                                                <div class="card-body">
+                                                    <h5 class="card-title">
+                                                        <%= doc.category %>
+                                                    </h5>
+                                                    <p class="text-muted">Uploaded on <%= new
+                                                            Date(doc.createdAt).toLocaleDateString() %>
+                                                    </p>
+
+                                                    <p>Status:
+                                                        <span
+                                                            class="badge bg-<%= image.isApproved ? 'success' : 'secondary' %>">
+                                                            <%= image.isApproved ? 'Approved' : 'Disapproved' %>
+                                                        </span>
+                                                    </p>
+
+                                                    <div class="d-flex justify-content-between">
+                                                        <!-- Toggle Approve/Disapprove -->
+                                                        <a href="/admin/gallery/<%= doc._id %>/image/<%= index %>/toggle"
+                                                            class="btn btn-sm <%= image.isApproved ? 'btn-warning' : 'btn-success' %>"
+                                                            title="<%= image.isApproved ? 'Disapprove' : 'Approve' %>">
+                                                            <%= image.isApproved ? '❌' : '✅' %>
+                                                        </a>
+
+                                                        <!-- Delete -->
+                                                        <a href="/admin/gallery/<%= doc._id %>/image/<%= index %>"
+                                                            class="btn btn-sm btn-danger"
+                                                            onclick="return confirm('Are you sure you want to delete this image?')"
+                                                            title="Delete">
+                                                            🗑️
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <% }) %>
+                                            <% }) %>
+                                                <% } else { %>
+                                                    <p>No albums uploaded yet.</p>
+                                                    <% } %>
+                        </div>
+
+
+                    </div>
+
+                    <script>
+                        const form = document.getElementById('uploadForm');
+                        const spinner = document.getElementById('spinner');
+                        const btnText = document.getElementById('btnText');
+
+                        form.addEventListener('submit', () => {
+                            spinner.classList.remove('d-none');
+                            btnText.textContent = 'Uploading...';
+                        });
+                    </script>
+
+                    <%- include('../partials/footer') %>

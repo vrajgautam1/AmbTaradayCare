@@ -5,7 +5,7 @@ exports.getAllInquiries = async (req, res) => {
     try {
         const inquiries = await Inquiry.find().sort({ createdAt: -1 });
         console.log("Fetched inquiries:", inquiries);
-        res.json(inquiries);
+        res.render("admin/pages/inquiries", { inquiries })
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -31,7 +31,7 @@ exports.markAsRead = async (req, res) => {
             { new: true }
         );
         console.log("Marked inquiry as read:", inquiry);
-        res.json(inquiry);
+        return res.redirect("/admin/viewinquiries")
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
@@ -42,7 +42,7 @@ exports.deleteInquiry = async (req, res) => {
     try {
         await Inquiry.findByIdAndDelete(req.params.id);
         console.log("Deleted inquiry:", req.params.id);
-        res.json({ message: "Deleted successfully" });
+        return res.redirect("/admin/viewinquiries")
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

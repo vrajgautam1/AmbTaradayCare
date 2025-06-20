@@ -14,50 +14,63 @@ exports.createReview = async (req, res) => {
 // ✅ View all reviews (admin)
 exports.getAllReviews = async (req, res) => {
   try {
-    const reviews = await Review.find();
-    res.status(200).json(reviews);
+    const reviews = await Review.find().sort({ createdAt: -1 });
+    res.render("admin/pages/reviews", { reviews, filter: "all" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).send("Error loading reviews");
   }
 };
 
 // ✅ Approve or reject a review
 exports.setApproval = async (req, res) => {
   try {
-    const review = await Review.findByIdAndUpdate(
-      req.params.id,
-      { isApproved: true },
-      { new: true }
-    );
-
-    if (!review) {
-      return res.status(404).json({ error: "Review not found" });
-    }
-
-    res.status(200).json({ message: "Review approved successfully", review });
+    await Review.findByIdAndUpdate(req.params.id, { isApproved: true });
+    res.redirect("/admin/viewreviews"); // ✅ redirect to reviews page
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).send("Approval failed");
   }
 };
 
 exports.disapproveReview = async (req, res) => {
   try {
-    const review = await Review.findByIdAndUpdate(
-      req.params.id,
-      { isApproved: false },
-      { new: true }
-    );
-
-    if (!review) {
-      return res.status(404).json({ error: "Review not found" });
-    }
-
-    res.status(200).json({ message: "Review disapproved successfully", review });
+    await Review.findByIdAndUpdate(req.params.id, { isApproved: false });
+    res.redirect("/admin/viewreviews"); // ✅ redirect
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).send("Disapproval failed");
   }
 };
 
+
+exports.deleteReview = async (req, res) => {
+  try {
+    await Review.findByIdAndDelete(req.params.id);
+    res.redirect("/admin/viewreviews");
+  } catch (err) {
+    res.status(500).send("Error deleting review");
+  }
+};
+
+
+
+// ✅ Get approved reviews only (for homepage)
+exports.renderApprovedReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find({ isApproved: true }).sort({ createdAt: -1 });
+    res.render("admin/pages/reviews", { reviews, filter: "approved" });
+  } catch (err) {
+    res.status(500).send("Error loading approved reviews");
+  }
+};
+
+// Disapproved Reviews
+exports.renderDisapprovedReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find({ isApproved: false }).sort({ createdAt: -1 });
+    res.render("admin/pages/reviews", { reviews, filter: "disapproved" });
+  } catch (err) {
+    res.status(500).send("Error loading disapproved reviews");
+  }
+};
 
 
 // ✅ Edit review before approval
@@ -74,21 +87,4 @@ exports.editReview = async (req, res) => {
   }
 };
 
-// ✅ Get approved reviews only (for homepage)
-exports.getApprovedReviews = async (req, res) => {
-  try {
-    const approved = await Review.find({ isApproved: true });
-    res.status(200).json(approved);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
-exports.getdisapprovedReviews = async(req, res)=>{
-  try {
-    let disapprovedReviews = await Review.find({isApproved: false});
-    res.status(200).json(disapprovedReviews)
-  } catch (error) {
-    res.status(500).json({error: err.message})
-  }
-}

@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+    <%- include('../partials/sidebar') %>
+
+        <!-- ============================================================== -->
+        <!-- Page wrapper  -->
+        <!-- ============================================================== -->
+        <div class="page-wrapper">
+
+            <div class="container-fluid">
+
+                <div class="row">
+                    <div class="container-fluid mt-5">
+
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h4 class="card-title mb-4">Edit Event</h4>
+
+                                <form action="/admin/event/<%= event._id %>/edit" method="POST"
+                                    enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <label class="form-label">Title</label>
+                                        <input type="text" name="title" class="form-control" required
+                                            value="<%= event.title %>" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Description</label>
+                                        <textarea name="description" class="form-control"
+                                            rows="4"><%= event.description %></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Date</label>
+                                        <input type="date" name="date" class="form-control" required
+                                            value="<%= event.date.toISOString().substring(0, 10) %>" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Current Image</label><br />
+                                        <img src="/uploads/<%= event.image %>" alt="Event Image"
+                                            class="img-thumbnail mb-2" width="200" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Change Image (optional)</label>
+                                        <input type="file" name="image" accept="image/*" class="form-control" />
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    <a href="/admin/allevents" class="btn btn-secondary ms-2">Cancel</a>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <%- include('../partials/footer') %>

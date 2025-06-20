@@ -5,12 +5,19 @@ const apiRouter = require("./routers/index")
 const bodyParser = require("body-parser")
 const path = require("path")
 const multer = require("multer");
+const methodOverride = require("method-override");
+
+app.use(methodOverride("_method"));
 
 app.use(bodyParser.urlencoded({extended:true}))
 
 //-for adding files in the uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads"))); 
 //-static files
+app.use(express.static(path.join(__dirname, "public")));
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(apiRouter)

@@ -11,7 +11,7 @@ exports.createEvent = async (req, res) => {
 
     const event = new Event({ title, description, date, image });
     await event.save();
-    res.status(201).json({ message: "Event created", event });
+    return res.redirect("/admin/allevents");
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -20,17 +20,20 @@ exports.createEvent = async (req, res) => {
 // ✅ View All Events
 exports.getAllEvents = async (req, res) => {
   try {
-    const events = await Event.find();
-    res.status(200).json(events);
+    const events = await Event.find().sort({ date: 1 });
+    res.render("admin/pages/events", { events });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).send("Could not load events.");
   }
 };
 
-// ✅ Get Upcoming Events - basically when the admin wants to see if there's any upcoming events they want to see. 
+// ✅ Get Upcoming Events - basically when the admin wants to see if there's any upcoming events they want to see.
 exports.getUpcomingEvents = async (req, res) => {
   try {
-    const events = await Event.find({ date: { $gte: new Date() }, isApproved: true });
+    const events = await Event.find({
+      date: { $gte: new Date() },
+      isApproved: true,
+    });
     res.status(200).json(events);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -40,7 +43,10 @@ exports.getUpcomingEvents = async (req, res) => {
 // ✅ Get Past Events
 exports.getPastEvents = async (req, res) => {
   try {
-    const events = await Event.find({ date: { $lt: new Date() }, isApproved: true });
+    const events = await Event.find({
+      date: { $lt: new Date() },
+      isApproved: true,
+    });
     res.status(200).json(events);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -50,8 +56,12 @@ exports.getPastEvents = async (req, res) => {
 // ✅ Approve Event
 exports.approveEvent = async (req, res) => {
   try {
-    const event = await Event.findByIdAndUpdate(req.params.id, { isApproved: true }, { new: true });
-    res.status(200).json({ message: "Event approved", event });
+    const event = await Event.findByIdAndUpdate(
+      req.params.id,
+      { isApproved: true },
+      { new: true }
+    );
+    return res.redirect("/admin/allevents");
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -60,8 +70,12 @@ exports.approveEvent = async (req, res) => {
 // ✅ Remove Event
 exports.removeEvent = async (req, res) => {
   try {
-    const event = await Event.findByIdAndUpdate(req.params.id, { isApproved: false }, { new: true });
-    res.status(200).json({ message: "Event removed from public view", event });
+    const event = await Event.findByIdAndUpdate(
+      req.params.id,
+      { isApproved: false },
+      { new: true }
+    );
+    return res.redirect("/admin/allevents");
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -71,7 +85,7 @@ exports.removeEvent = async (req, res) => {
 exports.deleteEvent = async (req, res) => {
   try {
     await Event.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Event deleted successfully" });
+    return res.redirect("/admin/allevents");
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -89,30 +103,37 @@ exports.editEvent = async (req, res) => {
 
     const existingEvent = await Event.findById(eventId);
     if (!existingEvent) {
-      return res.status(404).json({ error: "Event not found" });
+      return res.status(404).send("Event not found");
     }
 
-    // Prepare update data
     const updateData = { title, description, date };
 
-    // If new image uploaded
     if (req.file) {
-      // Delete old image from filesystem
-      const oldImagePath = path.join(__dirname, "../uploads", existingEvent.image);
+      const oldImagePath = path.join(
+        __dirname,
+        "../uploads",
+        existingEvent.image
+      );
       fs.unlink(oldImagePath, (err) => {
-        if (err) {
-          console.error("Error deleting old image:", err);
-        }
+        if (err) console.error("Error deleting old image:", err);
       });
-
       updateData.image = req.file.filename;
     }
 
-    const updatedEvent = await Event.findByIdAndUpdate(eventId, updateData, { new: true });
-
-    res.status(200).json({ message: "Event updated successfully", event: updatedEvent });
+    await Event.findByIdAndUpdate(eventId, updateData);
+    res.redirect("/admin/allevents");
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).send("Update failed: " + err.message);
   }
 };
 
+exports.openEditEventPage = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).send("Event not found");
+    res.render("admin/pages/editevent", { event });
+  } catch (err) {
+    console.error("Edit event load error:", err);
+    res.status(500).send("Error loading event");
+  }
+};

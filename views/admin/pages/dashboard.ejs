@@ -1,0 +1,182 @@
+<%- include('../partials/header') %>
+  <%- include('../partials/sidebar') %>
+    <!-- ============================================================== -->
+    <!-- Page wrapper  -->
+    <!-- ============================================================== -->
+    <div class="page-wrapper">
+
+      <div class="container-fluid">
+
+        <div class="row">
+          <!-- Column -->
+          <div class="container my-5">
+            <h2 class="mb-4">📊 Admin Dashboard</h2>
+
+            <!-- Top Stats -->
+            <div class="row g-4 mb-4">
+              <% const cardData=[ { title: 'Total Inquiries' , value: totalInquiries, color: 'primary' }, {
+                title: 'Total Reviews' , value: totalReviews, color: 'success' }, { title: 'Approved Reviews' , value:
+                approvedReviews, color: 'success' }, { title: 'Pending Reviews' , value: pendingReviews,
+                color: 'warning' }, { title: 'Total Events' , value: totalEvents, color: 'info' }, {
+                title: 'Upcoming Events' , value: upcomingEvents, color: 'primary' }, { title: 'Past Events' , value:
+                pastEvents, color: 'secondary' }, { title: 'Gallery Images' , value: totalGalleryImages, color: 'dark'
+                }, { title: 'Approved Albums' , value: approvedAlbums, color: 'success' }, { title: 'Disapproved Albums'
+                , value: disapprovedAlbums, color: 'danger' } ]; %>
+
+                <% cardData.forEach(card=> { %>
+                  <div class="col-md-4">
+                    <div class="card border-<%= card.color %>">
+                      <div class="card-body">
+                        <h6 class="card-title">
+                          <%= card.title %>
+                        </h6>
+                        <p class="fs-4 fw-bold text-<%= card.color %>">
+                          <%= card.value %>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <% }); %>
+            </div>
+
+            <!-- Recent Inquiries -->
+            <div class="mb-5">
+              <h4>📬 Recent Inquiries</h4>
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Message</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% recentInquiries.forEach(i=> { %>
+                    <tr>
+                      <td>
+                        <%= i.name %>
+                      </td>
+                      <td>
+                        <%= i.email %>
+                      </td>
+                      <td>
+                        <%= i.message %>
+                      </td>
+                      <td>
+                        <%= i.createdAt.toLocaleDateString() %>
+                      </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pending Reviews -->
+            <div class="mb-5">
+              <h4>📝 Pending Reviews</h4>
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Message</th>
+                    <th>Rating</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% recentReviews.forEach(r=> { %>
+                    <tr>
+                      <td>
+                        <%= r.name %>
+                      </td>
+                      <td>
+                        <%= r.message %>
+                      </td>
+                      <td>
+                        <%= r.rating %>⭐
+                      </td>
+                      <td>
+                        <%= r.createdAt.toLocaleDateString() %>
+                      </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div class="mb-5">
+              <h4>📅 Upcoming Events</h4>
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% upcomingEventList.forEach(e=> { %>
+                    <tr>
+                      <td>
+                        <%= e.title %>
+                      </td>
+                      <td>
+                        <%= e.description %>
+                      </td>
+                      <td>
+                        <%= new Date(e.date).toLocaleDateString() %>
+                      </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Recent Gallery Albums -->
+            <div class="mb-5">
+              <h4>🖼️ Recent Gallery Albums</h4>
+              <div class="row">
+                <% recentAlbums.forEach(album => { %>
+  <% album.images.forEach(image => { %>
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <img src="/uploads/<%= image.filename %>" class="card-img-top" alt="gallery">
+        <div class="card-body">
+          <h6 class="card-title">
+            <%= album.category %>
+          </h6>
+          <p class="text-muted">
+            Created on <%= new Date(album.createdAt).toLocaleDateString() %>
+          </p>
+          <p>Status:
+            <span class="badge bg-<%= image.isApproved ? 'success' : 'secondary' %>">
+              <%= image.isApproved ? 'Approved' : 'Disapproved' %>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+<% }) %>
+
+              </div>
+            </div>
+
+          </div>
+          <!-- Column -->
+
+          <!-- ============================================================== -->
+          <!-- Sales chart -->
+          <!-- ============================================================== -->
+
+          <!-- ============================================================== -->
+          <!-- Recent comment and chats -->
+          <!-- ============================================================== -->
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Container fluid  -->
+        <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <%- include('../partials/footer') %>

@@ -16,14 +16,17 @@ router.get("/upcomingevents", eventController.getUpcomingEvents);
 router.get("/pastevents", eventController.getPastEvents);
 
 // Approve or remove events (admin)
-router.patch("/event/:id/approve", eventController.approveEvent);
-router.patch("/event/:id/remove", eventController.removeEvent);
+router.get("/approveEvent/:id", eventController.approveEvent);
+router.get("/disapproveEvent/:id", eventController.removeEvent);
 
 // Delete event (admin)
-router.delete("/event/:id/delete", eventController.deleteEvent);
+router.get("/event/:id/delete", eventController.deleteEvent);
+
+// Show edit form (GET)
+router.get("/event/:id", eventController.openEditEventPage);
 
 // Edit event (admin)
-router.put("/event/:id/edit", upload.single("image"), eventController.editEvent);
+router.post("/event/:id/edit", upload.single("image"), eventController.editEvent);
 
 
 module.exports = router;
