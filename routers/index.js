@@ -10,6 +10,9 @@ const galleryRouter = require("./admin/galleryRouter");
 const authRouter = require("./admin/authRouter");
 const dashboardRouter = require("./admin/dashboardRouter")
 const authMiddleware = require("../middleware/authMiddleware");
+const clientController = require("../controllers/clientController")
+
+router.get("/", clientController.OpenClientPage)
 
 // 🧑‍💼 Unprotected Login routes
 router.use(authRouter);
